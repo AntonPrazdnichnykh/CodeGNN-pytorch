@@ -1,3 +1,4 @@
+from typing import Dict, List
 import subprocess
 from os.path import join, dirname
 from warnings import filterwarnings
@@ -15,7 +16,7 @@ NODE = "node"
 TOKEN = "token"
 CHILDREN = "children"
 
-SPLIT_FIELDS = [LABEL, TOKEN]
+SPLIT_FIELDS = [LABEL, TOKEN, SOURCE]
 
 # vocabulary keys
 PAD = "<PAD>"
@@ -44,6 +45,21 @@ def download_dataset(url: str, dataset_dir: str, dataset_name: str):
         raise RuntimeError(f"Failed to untar dataset. Error:\n{untar_command_result.stderr}")
 
 
+def print_table(data: Dict[str, List[str]]):
+    row_lens = [max(len(header), max([len(s) for s in values])) for header, values in data.items()]
+    row_template = " | ".join(["{:<" + str(i) + "}" for i in row_lens])
+    headers = [key for key in data.keys()]
+    max_data_per_col = max([len(v) for v in data.values()])
+    row_data = []
+    for i in range(max_data_per_col):
+        row_data.append([v[i] if len(v) > i else "" for k, v in data.items()])
+
+    header_line = row_template.format(*headers)
+    delimiter_line = "-" * len(header_line)
+    row_lines = [row_template.format(*row) for row in row_data]
+    print("", header_line, delimiter_line, *row_lines, sep="\n")
+
+
 def filter_warnings():
     # "The dataloader does not have many workers which may be a bottleneck."
     filterwarnings("ignore", category=UserWarning, module="pytorch_lightning.utilities.distributed", lineno=50)
@@ -52,12 +68,12 @@ def filter_warnings():
     filterwarnings("ignore", category=UserWarning, module="torch.optim.lr_scheduler", lineno=234)  # load
 
 
-# def print_config(config: DictConfig, ignore_keys: List[str] = None, n_cols: int = 4):
-#     if ignore_keys is None:
-#         ignore_keys = []
-#     parameters = [f"{k}: {v}" for k, v in config.items() if k not in ignore_keys]
-#     table_data = {}
-#     items_per_col = int(ceil(len(parameters) / n_cols))
-#     for col in range(n_cols):
-#         table_data[f"Parameters #{col + 1}"] = parameters[items_per_col * col : items_per_col * (col + 1)]
-#     print_table(table_data)
+def print_config(config: DictConfig, ignore_keys: List[str] = None, n_cols: int = 4):
+    if ignore_keys is None:
+        ignore_keys = []
+    parameters = [f"{k}: {v}" for k, v in config.items() if k not in ignore_keys]
+    table_data = {}
+    items_per_col = int(ceil(len(parameters) / n_cols))
+    for col in range(n_cols):
+        table_data[f"Parameters #{col + 1}"] = parameters[items_per_col * col : items_per_col * (col + 1)]
+    print_table(table_data)

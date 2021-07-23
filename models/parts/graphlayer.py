@@ -20,10 +20,7 @@ class GCNLayer(nn.Module):
 
     def forward(self, nodes, edges):
         # assert isinstance(x, list)
-        l_norm = create_graph_lapl_norm(edges)  #  edges + torch.eye(edges.size(1))  #
+        l_norm = edges + torch.eye(edges.size(-1))  # create_graph_lapl_norm(edges)
         out = torch.bmm(l_norm, nodes)
         return self.net(out)
 
-    # def compute_out_shape(self, input_shape):
-    #     assert isinstance(input_shape, list)
-    #     return None, input_shape[0][1], self.out_dim

@@ -85,10 +85,9 @@ class CodeGNNGRU(LightningModule):
             ast_edges,
             target = None,
     ):
-        #TODO: rewrite taking into account evaluation mode, where no target provided
         sc_emb = self.token_embedding(source_code)
 
-        ast_node_emb = self.node_embedding(ast_nodes) + self.token_embedding(ast_node_tokens).sum(2)
+        ast_node_emb = self.node_embedding(ast_nodes) + self.token_embedding(ast_node_tokens).sum(2)  # no second term in original implementation, but why not
 
         sc_enc, sc_h = self.source_code_enc(sc_emb)
         ast_enc = ast_node_emb
@@ -146,7 +145,7 @@ class CodeGNNGRU(LightningModule):
         loss = self._calculate_loss(logits, labels)
         prediction = logits.argmax(-1)
 
-        statistic = PredictionStatistic(True, self._label_pad_id, self._metric_skip_tokens)  # TODO
+        statistic = PredictionStatistic(True, self._label_pad_id, self._metric_skip_tokens)
         batch_metric = statistic.update_statistic(labels, prediction)
 
         log: Dict[str, Union[float, torch.Tensor]] = {'train/loss': loss}

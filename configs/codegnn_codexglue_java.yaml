@@ -28,10 +28,10 @@ max_source_parts: 100
 hyper_parameters:
   n_epochs: 7
   patience: 10
-  batch_size: 64
+  batch_size: 512
   clip_norm: 5
     
-  optimizer: "Momentum"
+  optimizer: "Adam"
   start_from: 0
   cycle_len: 6574
   min_lr: 0.001

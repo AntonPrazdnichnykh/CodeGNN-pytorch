@@ -30,8 +30,8 @@ class GRUDecoder(nn.Module):
         )
 
         self._dropout_rnn = nn.Dropout(config.rnn_dropout)
-        # self._sc_attn = LuongAttention(config.hidden_size)
-        # self._ast_attn = LuongAttention(config.hidden_size)
+        self._sc_attn = LuongAttention(config.hidden_size)
+        self._ast_attn = LuongAttention(config.hidden_size)
         self._concat_layer = nn.Linear(3 * config.hidden_size, config.hidden_size, bias=False)
         self._norm = nn.LayerNorm(config.hidden_size)
         self._projection_layer = nn.Linear(config.hidden_size, self._out_size, bias=False)
@@ -76,12 +76,14 @@ class GRUDecoder(nn.Module):
         rnn_output = self._dropout_rnn(rnn_output)
 
         # [batch_size, source_len]
-        sc_attn_weights = F.softmax(torch.bmm(sc_enc, h_prev[-1].view(batch_size, -1, 1)).squeeze(-1), dim=-1)
+        sc_attn_weights = self._sc_attn(h_prev[-1], sc_enc)
+        # sc_attn_weights = F.softmax(torch.bmm(sc_enc, h_prev[-1].view(batch_size, -1, 1)).squeeze(-1), dim=-1)
 
         # [batch_size, 1, hidden_size]
         sc_context = torch.bmm(sc_attn_weights.unsqueeze(1), sc_enc)
 
-        ast_attn_weights = F.softmax(torch.bmm(ast_enc, h_prev[-1].view(batch_size, -1, 1)).squeeze(-1), dim=-1)
+        # ast_attn_weights = F.softmax(torch.bmm(ast_enc, h_prev[-1].view(batch_size, -1, 1)).squeeze(-1), dim=-1)
+        ast_attn_weights = self._ast_attn(h_prev[-1], ast_enc)
         ast_context = torch.bmm(ast_attn_weights.unsqueeze(1), ast_enc)
 
         context = torch.cat((sc_context, rnn_output, ast_context), dim=2).squeeze(1)
@@ -94,7 +96,3 @@ class GRUDecoder(nn.Module):
         output = self._projection_layer(concat)
 
         return output, h_prev
-
-
-
-
