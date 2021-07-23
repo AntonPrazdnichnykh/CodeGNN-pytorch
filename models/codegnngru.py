@@ -165,7 +165,7 @@ class CodeGNNGRU(LightningModule):
         self.log_dict(log)
         self.log("f1", batch_metric["f1"], prog_bar=True, logger=False)
 
-        return {"loss": loss, "statistics": statistic}
+        return {"loss": loss, "statistic": statistic}
 
     def validation_step(
             self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
