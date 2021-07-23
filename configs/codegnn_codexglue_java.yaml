@@ -13,9 +13,9 @@ log_offline: false
 resume_checkpoint: null
 
 # ===== Data =====
-data_folder: /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts
+data_folder: data  # /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts
 dataset: codexglue-docstrings-java
-output_dir: /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts/outputs/SGD
+output_dir: data/outputs  # /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts/outputs/SGD
 
 max_labels: 9000
 max_label_parts: 15
@@ -37,7 +37,7 @@ hyper_parameters:
   min_lr: 0.001
   max_lr: 0.0074
   nesterov: true
-  learning_rate: 0.01
+  learning_rate: 0.001
   weight_decay: 0
   strategy: "decay"
   lr_decay_gamma: 0.95

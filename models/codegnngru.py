@@ -1,5 +1,6 @@
 from typing import Tuple, List, Dict, Union
 
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -65,6 +66,16 @@ class CodeGNNGRU(LightningModule):
 
         #Decoder
         self.decoder = GRUDecoder(config, vocabulary)
+
+        # saving predictions
+        if not os.path.exists(config.output_dir):
+            os.mkdir(config.output_dir)
+        self._test_outputs = []
+        self._val_outputs = []
+        self.val = False
+
+        #SWA
+        self.swa = (config.hyper_parameters.optimizer == "SWA")
 
     @property
     def config(self) -> DictConfig:
@@ -159,12 +170,22 @@ class CodeGNNGRU(LightningModule):
     def validation_step(
             self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
             batch_idx: int,
+            test: bool = False,
     ) -> Dict:
+        if self.swa and not self.val:
+            print("Validation starts")
+            self.trainer.optimizers[0].swap_swa_sgd()
+            self.val = True
         source_code, ast_nodes, ast_node_tokens, ast_edges, labels = batch
         logits = self(source_code, ast_nodes, ast_node_tokens, ast_edges)
         labels = batch[-1]
         loss = self._calculate_loss(logits, labels)
         prediction = logits.argmax(-1)
+
+        if test:
+            self._test_outputs.append(prediction.detach().cpu())
+        else:
+            self._val_outputs.append(prediction.detach().cpu())
 
         statistic = PredictionStatistic(True, self._label_pad_id, self._metric_skip_tokens)
         statistic.update_statistic(labels, prediction)
@@ -172,10 +193,10 @@ class CodeGNNGRU(LightningModule):
         return {"loss": loss, "statistic": statistic}
 
     def test_step(
-            self, batch: Tuple[torch.Tensor, Tuple[torch.Tensor, torch.Tensor], torch.Tensor, torch.Tensor],
+            self, batch: Tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor],
             batch_idx: int,
     ) -> Dict:
-        return self.validation_step(batch, batch_idx)
+        return self.validation_step(batch, batch_idx, test=True)
 
         # ========== On epoch end ==========
 
@@ -195,6 +216,15 @@ class CodeGNNGRU(LightningModule):
 
     def validation_epoch_end(self, outputs: List[Dict]):
         self._shared_epoch_end(outputs, "val")
+        torch.save(self._val_outputs,
+                   f"{self._config.output_dir}/{self._config.hyper_parameters.optimizer}_epoch{self.current_epoch}_val_outputs.pkl")
+        self._val_outputs = []
+        print("Validation finished")
+        if self.swa:
+            self.trainer.optimizers[0].swap_swa_sgd()
+            self.val = False
 
     def test_epoch_end(self, outputs: List[Dict]):
         self._shared_epoch_end(outputs, "test")
+        torch.save(self._test_outputs,
+                   f"{self._config.output_dir}/{self._config.hyper_parameters.optimizer}_test_outputs.pkl")

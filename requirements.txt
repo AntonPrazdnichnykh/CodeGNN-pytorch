@@ -8,6 +8,6 @@ mypy==0.800
 hydra-core==1.0.6
 omegaconf==2.0.6
 dgl==0.5.3
-allennlp==2.1.0
+rouge==1.0.1
 torch_optimizer
 torchcontrib

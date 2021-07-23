@@ -7,7 +7,7 @@ def calc_degree_matrix_norm(a):
 
 
 def create_graph_lapl_norm(a):
-    a = a + torch.eye(int(a.size(-1)))
+    a = a + torch.eye(int(a.size(-1)), device=a.device)
     d_norm = calc_degree_matrix_norm(a)
     return torch.bmm(torch.bmm(d_norm, a), d_norm)
 
@@ -20,7 +20,7 @@ class GCNLayer(nn.Module):
 
     def forward(self, nodes, edges):
         # assert isinstance(x, list)
-        l_norm = edges + torch.eye(edges.size(-1))  # create_graph_lapl_norm(edges)
+        l_norm = edges + torch.eye(edges.size(-1), device=edges.device)  # create_graph_lapl_norm(edges)
         out = torch.bmm(l_norm, nodes)
         return self.net(out)
 
