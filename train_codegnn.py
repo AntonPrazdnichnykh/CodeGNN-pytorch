@@ -20,7 +20,13 @@ def train_codegnn(config: DictConfig):
     data_module = JsonlDataModule(config)
     data_module.prepare_data()
     data_module.setup()
-    model: LightningModule = CodeGNNGRU(config, data_module.vocabulary)
+    model: LightningModule
+    if config.model_type == 'codegnngru':
+        model = CodeGNNGRU(config, data_module.vocabulary)
+    elif config.model_type == 'codegnngru_leclair':
+        model = CodeGNNGRU(config, data_module.vocabulary)
+    else:
+        raise NotImplementedError('No such model')
 
     # define logger
     wandb_logger = WandbLogger(project=f"codegnn-{config.dataset}", log_model=False, offline=config.log_offline)

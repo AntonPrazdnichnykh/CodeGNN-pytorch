@@ -79,7 +79,7 @@ class JsonlDataModule(LightningDataModule):
     def val_dataloader(self, *args, **kwargs) -> DataLoader:
         return self._shared_dataloader(self._val, False)
 
-    def _test_dataloader(self, *args, **kwargs) -> DataLoader:
+    def test_dataloader(self, *args, **kwargs) -> DataLoader:
         return self._shared_dataloader(self._test, False)
 
     def transfer_batch_to_device(

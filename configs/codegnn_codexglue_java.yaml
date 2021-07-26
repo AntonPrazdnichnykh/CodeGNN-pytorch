@@ -13,9 +13,9 @@ log_offline: false
 resume_checkpoint: null
 
 # ===== Data =====
-data_folder: data  # /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts
+data_folder: /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts  # data
 dataset: codexglue-docstrings-java
-output_dir: data/outputs  # /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts/outputs/SGD
+output_dir: /home/anton/CodeSearchNet/dataset/CodeXGLUE-source-code-asts/outputs/SGD  #  data/outputs
 
 max_labels: 9000
 max_label_parts: 15
@@ -28,7 +28,7 @@ max_source_parts: 100
 hyper_parameters:
   n_epochs: 7
   patience: 10
-  batch_size: 512
+  batch_size: 64
   clip_norm: 5
     
   optimizer: "Adam"
@@ -52,6 +52,7 @@ progress_bar_refresh_rate: 1
 
 
 # ===== Model parameters =====
+model_type: codegnngru_leclair  # codegnn_gru
 teacher_forcing: 1
 embedding_size: 128
 hidden_size: 256
@@ -60,5 +61,5 @@ encoder_num_layers: 1
 decoder_num_layers: 1
 rnn_dropout: 0.5
 
-num_hops: 2
+num_hops: 10
 
