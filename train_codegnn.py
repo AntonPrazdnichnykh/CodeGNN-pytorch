@@ -6,7 +6,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping, Learning
 from pytorch_lightning.loggers import WandbLogger
 
 from data_module.jsonl_data_module import JsonlDataModule
-from models import CodeGNNGRU
+from models import CodeGNNGRU, LeClairCodeGNNGRU
 from utils.callbacks import UploadCheckpointCallback, PrintEpochResultCallback
 from utils.common import filter_warnings, print_config
 
@@ -24,7 +24,7 @@ def train_codegnn(config: DictConfig):
     if config.model_type == 'codegnngru':
         model = CodeGNNGRU(config, data_module.vocabulary)
     elif config.model_type == 'codegnngru_leclair':
-        model = CodeGNNGRU(config, data_module.vocabulary)
+        model = LeClairCodeGNNGRU(config, data_module.vocabulary)
     else:
         raise NotImplementedError('No such model')
 
