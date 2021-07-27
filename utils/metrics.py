@@ -1,18 +1,16 @@
 from typing import Dict, List, Optional
 
-from rouge import Rouge
 import torch
 
 
 class PredictionStatistic:
-    def __init__(self, mask_pad: bool, pad_idx: Optional[int] = None, skip_tokens: List[int] = None):
-        if mask_pad and pad_idx is None:
-            raise ValueError("You should specify pad id token for masking after it")
-        self._mask_pad = mask_pad
-        self._pad_idx = pad_idx
+    def __init__(self, mask_after_pad: bool, pad_id: Optional[int] = None, skip_tokens: List[int] = None):
+        if mask_after_pad and pad_id is None:
+            raise ValueError("Ypu should specify pad id token for masking after it")
+        self._mask_after_pad = mask_after_pad
+        self._pad_id = pad_id
         self._skip_tokens = [] if skip_tokens is None else skip_tokens
         self._true_positive = self._false_positive = self._false_negative = 0
-        self._rouge = Rouge()
 
     @staticmethod
     def _calculate_metric(true_positive: int, false_positive: int, false_negative: int) -> Dict[str, float]:
@@ -29,38 +27,31 @@ class PredictionStatistic:
     def get_metric(self) -> Dict[str, float]:
         return self._calculate_metric(self._true_positive, self._false_positive, self._false_negative)
 
-    def _mask_tensor_after_pad(self, target: torch.Tensor) -> torch.Tensor:
-        assert self._pad_idx is not None
-        mask = target != self._pad_idx
-        return mask
+    def _mask_tensor_after_pad(self, prediction: torch.Tensor) -> torch.Tensor:
+        assert self._pad_id is not None
+        mask_max_value, mask_max_indices = torch.max(prediction == self._pad_id, dim=0)
+        mask_max_indices[~mask_max_value] = prediction.shape[0]  # if no pad token use len+1 position
+        mask = torch.arange(prediction.shape[0], device=prediction.device).view(-1, 1) >= mask_max_indices
+        prediction[mask] = self._pad_id
+        return prediction
 
     def update_statistic(self, original: torch.Tensor, prediction: torch.Tensor) -> Dict[str, float]:
         """Calculate subtoken statistic for ground truth and predicted batches of labels.
-        :param original: [true seq length; batch_size] ground truth labels
-        :param prediction: [pred seq length; batch_size] predicted labels
+        :param original: [true seq length; batch size] ground truth labels
+        :param prediction: [pred seq length; batch size] predicted labels
         :return: dict with metrics for current batch
         """
         batch_size = original.shape[1]
         if prediction.shape[1] != batch_size:
             raise ValueError(f"Wrong batch size for prediction (expected: {batch_size}, actual: {prediction.shape[1]})")
-        if self._mask_pad:
-            mask = self._mask_tensor_after_pad(original)
-            prediction[mask] = self._pad_idx
+        if self._mask_after_pad:
+            prediction = self._mask_tensor_after_pad(prediction)
 
         true_positive = false_positive = false_negative = 0
-
-        hyps = []
-        refs = []
 
         for batch_idx in range(batch_size):
             gt_seq = [st for st in original[:, batch_idx] if st not in self._skip_tokens]
             pred_seq = [st for st in prediction[:, batch_idx] if st not in self._skip_tokens]
-
-            refs.append(' '.join(list(map(lambda t: str(int(t.item())), gt_seq))))
-            pred_str = ' '.join(list(map(lambda t: str(int(t.item())), pred_seq)))
-            if len(pred_str) == 0:
-                pred_str = '-'
-            hyps.append(pred_str)
 
             if len(gt_seq) == len(pred_seq) and all([g == p for g, p in zip(gt_seq, pred_seq)]):
                 true_positive += len(gt_seq)
@@ -79,17 +70,7 @@ class PredictionStatistic:
         self._false_positive += false_positive
         self._false_negative += false_negative
 
-        one_token_metrics = self._calculate_metric(true_positive, false_positive, false_negative)
-
-        rouge_metrics = self._rouge.get_scores(hyps, refs, avg=True)
-        ans = {}
-        for m, d in rouge_metrics.items():
-            for k, v in d.items():
-                ans[f"{m}_{k}"] = v
-        for k, v in one_token_metrics.items():
-            ans[k] = v
-
-        return ans
+        return self._calculate_metric(true_positive, false_positive, false_negative)
 
     @staticmethod
     def create_from_list(statistics: List["PredictionStatistic"]) -> "PredictionStatistic":
