@@ -19,6 +19,7 @@ class JsonlDataModule(LightningDataModule):
 
     _known_datasets = {
         "codexglue-docstrings-java": "https://www.dropbox.com/s/n742vvm8c9maqcf/codexglue-docstrings-java.tar.gz?dl=1",
+        "codecglue-docstrings-py": "https://www.dropbox.com/s/5kd0gqmbwca7z3x/codexglue-docstrings-py.tar.gz?dl=1",
     }
 
     def __init__(self, config: DictConfig):

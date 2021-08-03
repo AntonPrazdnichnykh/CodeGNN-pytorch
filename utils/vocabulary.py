@@ -130,7 +130,7 @@ class Vocabulary:
         plt.show()
 
         print(f"min label length: {min(label_lens)}, max label length: {max(label_lens)}, average: {np.mean(label_lens)}")
-        print(f"min source code length: {min(source_lens)}, max source code length: {max(source_lens)}, average: {np.mean(label_lens)}")
+        print(f"min source code length: {min(source_lens)}, max source code length: {max(source_lens)}, average: {np.mean(source_lens)}")
         print(f"min nodes number: {min(n_nodes)}, max nodes number: {max(n_nodes)}, average: {np.average(n_nodes)}")
 
         dataset_dir = path.dirname(train_data)
