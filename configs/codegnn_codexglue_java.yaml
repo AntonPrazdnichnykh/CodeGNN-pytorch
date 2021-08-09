@@ -67,7 +67,7 @@ gcn_encoder:
   norm: False
   residual: False
   rnn_cell: none  # gru / lstm
-  norm_layer: none  # layer_norm / batch_norm (TODO)
+  normalization_layer: none  # layer_norm / batch_norm (TODO)
 
 num_hops: 5
 

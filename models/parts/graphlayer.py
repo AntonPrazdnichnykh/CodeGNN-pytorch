@@ -25,7 +25,7 @@ class GCNLayer(nn.Module):
         elif config.normalization_layer == 'layer_norm':
             self.norm_layer = nn.LayerNorm(out_dim)
         elif config.normalization_layer == 'none':
-            self.norm_layer = torch.Identity()
+            self.norm_layer = nn.Identity()
         else:
             raise NotImplementedError()
 

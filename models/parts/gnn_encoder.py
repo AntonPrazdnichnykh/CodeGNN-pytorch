@@ -12,7 +12,7 @@ class GCNEncoder(nn.Module):
             self.rnn_cell = nn.GRUCell(config.gcn_hidden_size, config.hidden_size)
         elif config.gcn_encoder.rnn_cell == 'lstm':
             self.rnn_cell = nn.LSTMCell(config.gcn_hidden_size, config.hidden_size)
-        elif config.hcn_encoder.rnn_cell == 'none':
+        elif config.gcn_encoder.rnn_cell == 'none':
             self.rnn_cell = None
         else:
             raise NotImplementedError()
