@@ -52,7 +52,7 @@ progress_bar_refresh_rate: 1
 
 
 # ===== Model parameters =====
-model_type: codegnngru_leclair  # codegnn_gru
+decoder_type: simple_decoder  # leclair_decoder
 teacher_forcing: 1
 embedding_size: 128
 hidden_size: 256
@@ -61,5 +61,13 @@ encoder_num_layers: 1
 decoder_num_layers: 1
 rnn_dropout: 0.5
 
-num_hops: 10
+gnn_encoder_type: 'gcn'
+gcn_encoder:
+  use_bias: True
+  norm: False
+  residual: False
+  rnn_cell: none  # gru / lstm
+  norm_layer: none  # layer_norm / batch_norm (TODO)
+
+num_hops: 5
 
