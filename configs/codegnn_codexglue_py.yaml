@@ -56,18 +56,18 @@ decoder_type: simple_decoder  # leclair_decoder
 teacher_forcing: 1
 embedding_size: 128
 hidden_size: 256
-gcn_hidden_size: 128
 encoder_num_layers: 1
 decoder_num_layers: 1
 rnn_dropout: 0.5
 
-gnn_encoder_type: 'gcn'
-gcn_encoder:
+gnn_encoder:
+  type: "gat"
+  n_heads: 4
+  hidden_size: 128
   use_bias: True
-  norm: False
+  norm: True
   residual: False
   rnn_cell: none  # gru / lstm
   normalization_layer: none  # layer_norm / batch_norm (TODO)
-
-num_hops: 5
+  num_hops: 5
 

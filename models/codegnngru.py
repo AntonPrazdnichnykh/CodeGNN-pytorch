@@ -9,8 +9,8 @@ from torch.optim.lr_scheduler import _LRScheduler
 from pytorch_lightning import LightningModule
 from omegaconf import DictConfig
 
-from models.parts import GCNLayer, GRUDecoder, LeClairGRUDecoder, GCNEncoder, GATEncoder
-from utils.common import PAD, SOS, EOS, TOKEN, NODE
+from models.parts import GRUDecoder, LeClairGRUDecoder, GNNEncoder
+from utils.common import PAD, SOS, EOS
 from utils.training import configure_optimizers_alon
 from utils.vocabulary import Vocabulary
 from utils.metrics import PredictionStatistic
@@ -50,20 +50,10 @@ class CodeGNNGRU(LightningModule):
             batch_first=True,
         )
 
-        # gcn_layers = [GCNLayer(config.embedding_size, config.gcn_hidden_size)]
-        # gcn_layers.extend(
-        #     [GCNLayer(config.gcn_hidden_size, config.gcn_hidden_size) for _ in range(config.num_hops - 1)]
-        # )
-        # self.gcn_layers = nn.ModuleList(gcn_layers)
-        if config.gnn_encoder_type == 'gcn':
-            self.gnn_encoder = GCNEncoder(config)
-        elif config.gnn_encoder_type == 'gat':
-            self.gnn_encoder = GATEncoder(config)
-        else:
-            raise NotImplementedError()
+        self.gnn_encoder = GNNEncoder(config)
 
         self.ast_rnn_enc = nn.GRU(
-            config.gcn_hidden_size,
+            config.gnn_encoder.hidden_size,
             config.hidden_size,
             config.encoder_num_layers,
             dropout=config.rnn_dropout if config.encoder_num_layers > 1 else 0,
