@@ -21,14 +21,14 @@ max_labels: 9000
 max_label_parts: 15
 max_tokens: 45000
 max_node_token_parts: 5
-max_ast_nodes: 200
+max_ast_nodes: 250
 max_source_parts: 100
 
 # ===== Hyperparameters =====
 hyper_parameters:
   n_epochs: 5
   patience: 10
-  batch_size: 64
+  batch_size: 512
   clip_norm: 5
     
   optimizer: "Momentum"
@@ -61,7 +61,7 @@ decoder_num_layers: 1
 rnn_dropout: 0.5
 
 gnn_encoder:
-  type: "gct"
+  type: "gcn"
   n_heads: 1
   hidden_size: 128
   leaky_relu_negative_slope: 0.2
