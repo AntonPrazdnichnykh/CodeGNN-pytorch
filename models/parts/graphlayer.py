@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from omegaconf import DictConfig
+from torch.nn.parameter import Parameter
 
 
 
@@ -55,8 +56,10 @@ class GATLayer(nn.Module):
         # else:
         #     self.hidden_dim = out_dim
 
-        self.linear = nn.Linear(in_dim, self.hidden_dim * config.n_heads, bias=False)
-        self.attn = nn.Linear(self.hidden_dim * 2, 1, bias=False)
+        self.proj_weights = Parameter(torch.empty(in_dim, self.hidden_dim * config.n_heads))  # nn.Linear(in_dim, self.hidden_dim * config.n_heads, bias=False)
+        self.attn_weights = Parameter(torch.empty(config.n_heads, 2 * self.hidden_dim))  # nn.Linear(self.hidden_dim * 2, 1, bias=False)
+        nn.init.xavier_uniform_(self.proj_weights)
+        nn.init.xavier_uniform_(self.attn_weights)
 
         self.activation = nn.LeakyReLU(negative_slope=config.leaky_relu_negative_slope)
         self.dropout = nn.Dropout(config.dropout)
@@ -74,19 +77,20 @@ class GATLayer(nn.Module):
 
     def forward(self, nodes, edges):
         batch_size, n_nodes = nodes.shape[:2]
-        mapped = self.linear(nodes).view(batch_size, n_nodes, self.n_heads, -1)
-        mapped_repeat = mapped.repeat(1, n_nodes, 1, 1)
-        mapped_repeat_interleave = mapped.repeat_interleave(n_nodes, dim=1)
-        mapped_concat = torch.cat((mapped_repeat_interleave, mapped_repeat), dim=-1)
-        mapped_concat = mapped_concat.view(batch_size, n_nodes, n_nodes, self.n_heads, 2 * self.hidden_dim)
+        mapped = torch.matmul(nodes, self.proj_weights).view(batch_size, n_nodes, self.n_heads, -1).transpose(1, 2)  # [batch_size, n_heads, n_nodes, hidden_size]
+        mapped_left = torch.cat((mapped, torch.ones_like(mapped)), dim=-1)
+        mapped_right = torch.cat((torch.ones_like(mapped), mapped), dim=-1)
 
-        scores = self.activation(self.attn(mapped_concat)).squeeze(-1)
-        # edges = edges.unsqueeze(-1)
+        scores = self.activation(
+            torch.matmul(torch.matmul(mapped_left, torch.diag_embed(self.attn_weights)), mapped_right.transpose(2, 3))
+        )
 
-        scores = scores.masked_fill(edges == 0, float('-inf'))
-        attn_weights = self.dropout(F.softmax(scores, dim=2))
-        attn_res = torch.einsum('kijh, kjhf->kihf', attn_weights, mapped)
+        edges = edges.unsqueeze(1)
+
+        scores = scores.masked_fill(edges == 0, -1e9)  # [batch_size, n_heads, n_nodes, n_nodes]
+        attn_weights = self.dropout(F.softmax(scores, dim=-1))
+        attn_res = torch.matmul(attn_weights, mapped)  #  torch.einsum('khij, khjf->khif', attn_weights, mapped)
 
         if self.is_concat:
-            return torch.sigmoid(attn_res.reshape(batch_size, self.n_heads * self.hidden_dim))
-        return torch.sigmoid(attn_res.mean(dim=2))
+            return torch.sigmoid(attn_res.reshape(batch_size, n_nodes, self.n_heads * self.hidden_dim))
+        return torch.sigmoid(attn_res.mean(dim=1))

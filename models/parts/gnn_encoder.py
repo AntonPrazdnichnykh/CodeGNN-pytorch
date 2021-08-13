@@ -38,13 +38,13 @@ class GNNEncoder(nn.Module):
                         n_heads * gcn_hidden_size,
                         gcn_hidden_size,
                         config.gnn_encoder,
-                        is_concat=(i==ast_hops-1)
+                        is_concat=(i!=ast_hops-1)
                     ) for i in range(ast_hops)
                 ]
             )
         else:
             layers = [
-                layer_constructor(config.embedding_size, gcn_hidden_size, config.gnn_encoder, is_concat=(ast_hops==1))
+                layer_constructor(config.embedding_size, gcn_hidden_size, config.gnn_encoder, is_concat=(ast_hops!=1))
             ]
             layers.extend(
                 [
@@ -52,7 +52,7 @@ class GNNEncoder(nn.Module):
                         n_heads * gcn_hidden_size,
                         gcn_hidden_size,
                         config.gnn_encoder,
-                        is_concat=(i==ast_hops-1)
+                        is_concat=(i!=ast_hops-1)
                     ) for i in range(1, ast_hops)
                 ]
             )
@@ -75,34 +75,34 @@ class GNNEncoder(nn.Module):
         return ast_enc
 
 
-class GATEncoder(nn.Module):
-    def __init__(self, config: DictConfig):
-        super().__init__()
-        if config.gcn_encoder.rnn_cell == 'gru':
-            self.rnn_cell = nn.GRUCell(config.gcn_hidden_size, config.hidden_size)
-        elif config.gcn_encoder.rnn_cell == 'lstm':
-            self.rnn_cell = nn.LSTMCell(config.gcn_hidden_size, config.hidden_size)
-        elif config.gcn_encoder.rnn_cell == 'none':
-            self.rnn_cell = None
-        else:
-            raise NotImplementedError()
+# class GATEncoder(nn.Module):
+#     def __init__(self, config: DictConfig):
+#         super().__init__()
+#         if config.gcn_encoder.rnn_cell == 'gru':
+#             self.rnn_cell = nn.GRUCell(config.gcn_hidden_size, config.hidden_size)
+#         elif config.gcn_encoder.rnn_cell == 'lstm':
+#             self.rnn_cell = nn.LSTMCell(config.gcn_hidden_size, config.hidden_size)
+#         elif config.gcn_encoder.rnn_cell == 'none':
+#             self.rnn_cell = None
+#         else:
+#             raise NotImplementedError()
 
-        if self.rnn_cell:
-            self.hidden_size = config.hidden_size
-            self.hidden_init = nn.Linear(config.embedding_size, config.gcn_hidden_size)
-            self.layers = nn.ModuleList(
-                [
-                    GCNLayer(
-                        config.gcn_hidden_size, config.gcn_hidden_size, config.gcn_encoder
-                    ) for _ in range(config.num_hops)
-                ]
-            )
-        else:
-            layers = [GCNLayer(config.embedding_size, config.gcn_hidden_size, config.gcn_encoder)]
-            layers.extend(
-                [GCNLayer(config.gcn_hidden_size, config.gcn_hidden_size, config.gcn_encoder) for _ in range(config.num_hops - 1)]
-            )
-            self.layers = nn.ModuleList(layers)
+#         if self.rnn_cell:
+#             self.hidden_size = config.hidden_size
+#             self.hidden_init = nn.Linear(config.embedding_size, config.gcn_hidden_size)
+#             self.layers = nn.ModuleList(
+#                 [
+#                     GCNLayer(
+#                         config.gcn_hidden_size, config.gcn_hidden_size, config.gcn_encoder
+#                     ) for _ in range(config.num_hops)
+#                 ]
+#             )
+#         else:
+#             layers = [GCNLayer(config.embedding_size, config.gcn_hidden_size, config.gcn_encoder)]
+#             layers.extend(
+#                 [GCNLayer(config.gcn_hidden_size, config.gcn_hidden_size, config.gcn_encoder) for _ in range(config.num_hops - 1)]
+#             )
+#             self.layers = nn.ModuleList(layers)
 
-    def forward(self, embedded_nodes, edges):
-        pass
+#     def forward(self, embedded_nodes, edges):
+#         pass
