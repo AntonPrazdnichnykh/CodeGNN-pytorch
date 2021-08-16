@@ -109,7 +109,7 @@ class CodeGNNGRU(LightningModule):
             sc_enc,
             ast_enc,
             sc_h,
-            self._config.max_label_parts,
+            self._config.max_label_parts + 1,
             target
         )
 
@@ -124,7 +124,7 @@ class CodeGNNGRU(LightningModule):
         """
         batch_size = labels.shape[-1]
         _logits = logits.permute(1, 2, 0)
-        _labels = labels.transpose(0, 1)[:, 1:]
+        _labels = labels.transpose(0, 1)
         loss = F.cross_entropy(_logits, _labels, reduction="none")
         mask = _labels != self._vocabulary.label_to_id[PAD]
         loss = loss * mask
