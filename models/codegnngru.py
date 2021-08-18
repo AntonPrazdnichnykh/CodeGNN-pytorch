@@ -138,7 +138,7 @@ class CodeGNNGRU(LightningModule):
         source_code, ast_nodes, ast_node_tokens, ast_edges, labels = batch
         logits = self(source_code, ast_nodes, ast_node_tokens, ast_edges, labels)
         labels = batch[-1]
-        loss = self._calculate_loss(logits, labels)
+        loss = self._calculate_loss(logits[1:], labels[1:])
         prediction = logits.argmax(-1)
 
         statistic = PredictionStatistic(True, self._label_pad_id, self._metric_skip_tokens)
@@ -164,7 +164,7 @@ class CodeGNNGRU(LightningModule):
         source_code, ast_nodes, ast_node_tokens, ast_edges, labels = batch
         logits = self(source_code, ast_nodes, ast_node_tokens, ast_edges)
         labels = batch[-1]
-        loss = self._calculate_loss(logits, labels)
+        loss = self._calculate_loss(logits[1:], labels[1:])
         prediction = logits.argmax(-1)
 
         if test:
